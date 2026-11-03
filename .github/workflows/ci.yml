@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint (YAML / docs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate workflow YAML
+        run: |
+          pip install --quiet --user --break-system-packages pyyaml 2>/dev/null || pip install --quiet pyyaml
+          python3 - <<'EOF'
+          import sys, glob
+          try:
+              import yaml
+          except ImportError:
+              sys.exit("PyYAML not available")
+          for f in glob.glob(".github/workflows/*.yml") + glob.glob(".github/workflows/*.yaml"):
+              with open(f) as fh:
+                  yaml.safe_load(fh)
+              print(f"{f}: OK")
+          EOF
+
+  build:
+    name: Build (metadata validation)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check required repo files
+        run: |
+          test -f README
+          test -f CODING.md
+          echo "Repository metadata complete"
+
+  test:
+    name: Test (placeholder suite)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sanity checks
+        run: |
+          test -s README && echo "README present and non-empty"
+          git log --oneline | head -1
